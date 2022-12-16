@@ -3,8 +3,17 @@ package SERVER;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.Stack;
 
-public class design extends JFrame {
+public class design extends JFrame implements ActionListener {
     Container c;
     private Font titleFont, font;
 
@@ -15,6 +24,7 @@ public class design extends JFrame {
 
     design() {
         initComponents();   // Calling initComponents method
+
     }
 
     public void initComponents() {
@@ -83,7 +93,243 @@ public class design extends JFrame {
         offBtn.setFont(font);
         buttonPanel.add(offBtn);
         /*====================This section is for buttonPanel====================*/
+
+        /*====================This section is for ActionListener====================*/
+        onBtn.addActionListener(this);
+        offBtn.addActionListener(this);
+        /*====================This section is for ActionListener====================*/
     }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        // if user press ON button
+        if (e.getSource().equals(onBtn)) {
+            try {
+                serverConnection();
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+    }
+
+    ServerSocket serverSocket;
+    Socket clientSocket;
+    int port = 5000;
+    int count = 0;
+    String result;
+
+    public void serverConnection() throws IOException {
+        try {
+            serverSocket = new ServerSocket(port);
+        } catch (IOException e) {
+            System.out.println("Could not listen on port: 5000");
+            System.exit(-1);
+        }
+        dspArea.setText(dspArea.getText() + "Server is opened at port no.: " + serverSocket.getLocalPort() + "\n");
+
+        while (count < 10) {
+            clientSocket = serverSocket.accept();     // Waiting connection request from client side
+            dspArea.setText(dspArea.getText() + "Server is connected to port no.: " + clientSocket.getPort() + "\n");
+            MathHandler mathHandler = new MathHandler(clientSocket);
+            mathHandler.start();
+            count++;
+        }
+        serverSocket.close();
+    }
+
+    class MathHandler extends Thread {
+        Socket clientSocket;
+
+        public MathHandler(Socket cSocket) {
+            this.clientSocket = cSocket;
+        }
+
+        public void run() {
+            try {
+                BufferedReader br = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                PrintStream ps = new PrintStream(clientSocket.getOutputStream());
+                while (true) {
+                    String line = br.readLine();
+
+                    switch (line) {
+                        case "ENDS":
+                            ps.println("Connection Terminated");
+                            break;
+                        case "CALCULATE":
+                            result = Integer.toString(calculate(line));
+                            break;
+                        case "hi":
+                            result = "hello";
+                            break;
+                        case "HI":
+                            result = "hello";
+                            break;
+                        case "Hi":
+                            result = "hello";
+                            break;
+                        case "Hello":
+                            result = "Hi!";
+                            break;
+                        case "hello":
+                            result = "Hi!";
+                            break;
+                        case "What is your name?":
+                            result = "Jahid Hassan Santo";
+                            break;
+                        case "How are you?":
+                            result = "I am Fine.";
+                            break;
+                        case "What do you do?":
+                            result = "NOTHING TO DO";
+                        default:
+                            result = "I have to go. TATA BYE... BYE...";
+                    }
+
+//                    if (line.equals("ENDS")) {
+//                        ps.println("Connection Terminated");
+//                        break;
+//                    } else if (line.equals("CHAT")) {
+//                        result = chat(line);
+//                    } else if (line.equals("CALCULATE")) {
+//                        result = Integer.toString(calculate(line));
+//                    }
+
+                    ps.println(result);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
+    // This Section for CALCULATOR=======================================================================================
+    public static int calculate(String expression) {
+        char[] tokens = expression.toCharArray();
+
+        // Stack for numbers: 'values'
+        Stack<Integer> values = new
+                Stack<Integer>();
+
+        // Stack for Operators: 'ops'
+        Stack<Character> ops = new
+                Stack<Character>();
+
+        for (int i = 0; i < tokens.length; i++) {
+
+            // Current token is a
+            // whitespace, skip it
+            if (tokens[i] == ' ')
+                continue;
+
+            // Current token is a number,
+            // push it to stack for numbers
+            if (tokens[i] >= '0' &&
+                    tokens[i] <= '9') {
+                StringBuffer sbuf = new
+                        StringBuffer();
+
+                // There may be more than one
+                // digits in number
+                while (i < tokens.length &&
+                        tokens[i] >= '0' &&
+                        tokens[i] <= '9')
+                    sbuf.append(tokens[i++]);
+                values.push(Integer.parseInt(sbuf.
+                        toString()));
+
+                // right now the i points to
+                // the character next to the digit,
+                // since the for loop also increases
+                // the i, we would skip one
+                //  token position; we need to
+                // decrease the value of i by 1 to
+                // correct the offset.
+                i--;
+            }
+
+            // Current token is an opening brace,
+            // push it to 'ops'
+            else if (tokens[i] == '(')
+                ops.push(tokens[i]);
+
+                // Closing brace encountered,
+                // solve entire brace
+            else if (tokens[i] == ')') {
+                while (ops.peek() != '(')
+                    values.push(applyOp(ops.pop(),
+                            values.pop(),
+                            values.pop()));
+                ops.pop();
+            }
+
+            // Current token is an operator.
+            else if (tokens[i] == '+' ||
+                    tokens[i] == '-' ||
+                    tokens[i] == '*' ||
+                    tokens[i] == '/') {
+                // While top of 'ops' has same
+                // or greater precedence to current
+                // token, which is an operator.
+                // Apply operator on top of 'ops'
+                // to top two elements in values stack
+                while (!ops.empty() &&
+                        hasPrecedence(tokens[i],
+                                ops.peek()))
+                    values.push(applyOp(ops.pop(),
+                            values.pop(),
+                            values.pop()));
+
+                // Push current token to 'ops'.
+                ops.push(tokens[i]);
+            }
+        }
+
+        // Entire expression has been
+        // parsed at this point, apply remaining
+        // ops to remaining values
+        while (!ops.empty())
+            values.push(applyOp(ops.pop(),
+                    values.pop(),
+                    values.pop()));
+
+        // Top of 'values' contains
+        // result, return it
+        return values.pop();
+    }
+
+    // Returns true if 'op2' has higher
+    // or same precedence as 'op1',
+    // otherwise returns false.
+    public static boolean hasPrecedence(char op1, char op2) {
+        if (op2 == '(' || op2 == ')')
+            return false;
+        if ((op1 == '*' || op1 == '/') &&
+                (op2 == '+' || op2 == '-'))
+            return false;
+        else
+            return true;
+    }
+
+    // A utility method to apply an
+    // operator 'op' on operands 'a'
+    // and 'b'. Return the result.
+    public static int applyOp(char op, int b, int a) {
+        switch (op) {
+            case '+':
+                return a + b;
+            case '-':
+                return a - b;
+            case '*':
+                return a * b;
+            case '/':
+                if (b == 0)
+                    throw new UnsupportedOperationException("Cannot divide by zero");
+                return a / b;
+        }
+        return 0;
+    }
+// This Section for CALCULATOR=======================================================================================
 
 
     public static void main(String[] args) {

@@ -1,17 +1,26 @@
 package CLIENT;
 
+
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.net.Socket;
+import java.util.Scanner;
 
-public class design extends JFrame {
+public class design extends JFrame implements ActionListener {
     Container c;
-    private Font titleFont, font;
-
+    private Font titleFont, font, calculatorFont;
     private JLabel titleLabel, dspLabel;
     private JTextArea dspArea, memberArea;
-    private JButton onBtn, offBtn;
-    private JPanel dspPanel, buttonPanel, memberPanel, calculatorPanel;
+    private JTextField calculatorDisplayField, calculatorInputField, chatInputField;
+    private JButton connectBtn, disconnectBtn, chatBtn, calculatorBtn;
+    private JPanel dspPanel, buttonPanel, memberPanel, calculatorPanel, optionPanel;
 
     design() {
         initComponents();   // Calling initComponents method
@@ -33,6 +42,7 @@ public class design extends JFrame {
         /*====================This section is for Font creation====================*/
         titleFont = new Font("Acme", Font.BOLD, 50);
         font = new Font("Roboto", Font.PLAIN, 16);
+        calculatorFont = new Font("Digital-7", Font.PLAIN, 36);
         /*====================This section is for Font creation====================*/
 
         /*====================This section is for HEADING====================*/
@@ -50,18 +60,18 @@ public class design extends JFrame {
         buttonPanel.setBounds(30, 120, 700, 60);
         c.add(buttonPanel);
 
-        onBtn = new JButton("CONNECT");
-        onBtn.setFont(font);
-        buttonPanel.add(onBtn);
+        connectBtn = new JButton("CONNECT");
+        connectBtn.setFont(font);
+        buttonPanel.add(connectBtn);
 
-        offBtn = new JButton("DISCONNECT");
-        offBtn.setFont(font);
-        buttonPanel.add(offBtn);
+        disconnectBtn = new JButton("DISCONNECT");
+        disconnectBtn.setFont(font);
+        buttonPanel.add(disconnectBtn);
         /*====================This section is for buttonPanel====================*/
 
         /*====================This section is for MemberPanel====================*/
         memberPanel = new JPanel(new GridLayout(1, 1));
-        memberPanel.setBounds(457, 190, 270, 150);
+        memberPanel.setBounds(457, 190, 270, 160);
         memberPanel.setBorder(BorderFactory.createTitledBorder(null, "Owner_Information", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, new Font("Adobe Arabic", 1, 18)));
         c.add(memberPanel);
 
@@ -75,21 +85,122 @@ public class design extends JFrame {
 
         /*====================This section is for dspPanel====================*/
         dspPanel = new JPanel(new GridLayout(1, 1));
-        dspPanel.setBounds(30, 190, 389, 345);
+        dspPanel.setBounds(30, 190, 350, 240);
         dspPanel.setBorder(BorderFactory.createTitledBorder(null, "Display", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, new Font("Adobe Arabic", 1, 18)));
         c.add(dspPanel);
 
         dspArea = new JTextArea();
         dspArea.setFont(font);
+        dspArea.setEditable(false);
         dspPanel.add(dspArea);
+
+        chatInputField = new JTextField();
+        chatInputField.setBounds(30, 435, 350, 60);
+        chatInputField.setBorder(BorderFactory.createTitledBorder(null, "Chat Input", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, new Font("Adobe Arabic", 1, 18)));
+        chatInputField.setFont(font);
+        c.add(chatInputField);
         /*====================This section is for dspPanel====================*/
-        calculatorPanel = new JPanel((new GridLayout(2, 1)));
-        calculatorPanel.setBounds(457, 627, 270, 150);
+        calculatorPanel = new JPanel((new GridLayout(2, 1, 0, 10)));
+        calculatorPanel.setBounds(457, 350, 270, 150);
         calculatorPanel.setBorder(BorderFactory.createTitledBorder(null, "Calculator", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, new Font("Adobe Arabic", 1, 18)));
         c.add(calculatorPanel);
 
+        // Create an output text field.=======================================
+        calculatorDisplayField = new JTextField();
+        calculatorDisplayField.setBackground(Color.WHITE);
+        calculatorDisplayField.setFont(calculatorFont);
+        calculatorDisplayField.setHorizontalAlignment(JTextField.RIGHT);
+        calculatorDisplayField.setEditable(false);
+        calculatorDisplayField.getCaret().setVisible(true);
+        calculatorPanel.add(calculatorDisplayField);
+
+        // Create an input text field.=======================================
+        calculatorInputField = new JTextField();
+        calculatorInputField.setBackground(Color.WHITE);
+        calculatorInputField.setFont(calculatorFont);
+        calculatorInputField.setHorizontalAlignment(JTextField.LEFT);
+        calculatorInputField.setEditable(true);
+        calculatorPanel.add(calculatorInputField);
+        /*====================This section is for dspPanel====================*/
+
+        /*====================This section is for optionPanel====================*/
+        optionPanel = new JPanel((new GridLayout(2, 1, 0, 10)));
+        optionPanel.setBounds(380, 190, 77, 310);
+        c.add(optionPanel);
+
+        chatBtn = new JButton("CHAT");
+        chatBtn.setFont(font);
+        optionPanel.add(chatBtn);
+
+        calculatorBtn = new JButton("CALCULATOR");
+        calculatorBtn.setFont(font);
+        optionPanel.add(calculatorBtn);
+        /*====================This section is for optionPanel====================*/
+
+        /*====================This section is for ActionListener====================*/
+        connectBtn.addActionListener(this);
+        disconnectBtn.addActionListener(this);
+        chatBtn.addActionListener(this);
+        calculatorBtn.addActionListener(this);
+        /*====================This section is for ActionListener====================*/
     }
 
+    Socket clientSocket = null;
+    Scanner in;
+    PrintStream ps;
+    BufferedReader br;
+    String line;
+    String result;
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        // if user press Connection button
+        if (e.getSource().equals(connectBtn)) {
+            System.out.println("JAHID");
+            try {
+                clientSocket = new Socket("localhost", 5000);
+                in = new Scanner(System.in);
+                ps = new PrintStream(clientSocket.getOutputStream());
+                br = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+        // if user press Disonnection button
+        if (e.getSource().equals(disconnectBtn)) {
+            line = "ENDS";
+            ps.println(line);
+            try {
+                br.close();
+                ps.close();
+                clientSocket.close();
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+        //if user press CalculatorInputField
+        if (e.getSource().equals(calculatorBtn)) {
+            try {
+                line = calculatorInputField.getText();
+                ps.println(line);                // Send to server
+                result = br.readLine();         // Receive from server
+                calculatorDisplayField.setText(result);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+        // if user press CHAT button
+        if (e.getSource().equals(chatBtn)) {
+            try {
+                line = chatInputField.getText();
+                ps.println(line);           // Send to server
+                result = br.readLine();     // Receive from server
+                dspArea.setText(dspArea.getText() + result + "\n");
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+    }
 
     public static void main(String[] args) {
         design frame = new design();
