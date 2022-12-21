@@ -189,7 +189,7 @@ public class design extends JFrame implements ActionListener {
                 throw new RuntimeException(ex);
             }
         }
-        //if user press CalculatorInputField
+        //if user press Calculator button
         if (e.getSource().equals(calculatorBtn) || e.getSource().equals(calculatorInputField)) {
             try {
                 line = "calculatorBtn " + calculatorInputField.getText();

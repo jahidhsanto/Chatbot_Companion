@@ -209,41 +209,52 @@ public class design extends JFrame implements ActionListener {
 
                     String[] input = line.split(" ", 2);
                     String firstWord = input[0];
-                    String theRest = input[1];
+                    String theRest = input[1].toLowerCase();
 
+                    // if user press chat button
                     if (firstWord.equals("chatBtn")) {
-                        switch (theRest) {
-                            case "hi":
-                                result = "Hi there!";
-                                break;
-                            case "Hi":
-                                result = "Hi there!";
-                                break;
-                            case "Hello":
-                                result = "Hello!";
-                                break;
-                            case "hello":
-                                result = "Hello!";
-                                break;
-                            case "How are you?":
-                                result = "I'm doing well, thanks for asking!";
-                                break;
-                            case "What is your name?":
-                                result = "Jahid Hassan Santo";
-                                break;
-                            case "What do you do?":
-                                result = "NOTHING TO DO";
-                            default:
+                        if (theRest.contains("hi"))
+                            result = "Hi there!";
+                        else if (theRest.contains("hello"))
+                            result = "Hello!";
+                        else if (theRest.contains("how are you") || theRest.contains("hru") || theRest.contains("how r you") || theRest.contains("how r u") || theRest.contains("h r y") || theRest.contains("how r y") || theRest.contains("how are u"))
+                            result = "I'm doing well, thanks for asking!";
+                        else if (theRest.contains("what is your name") || theRest.contains("what's your name"))
+                            result = "I'm SANTO";
+                        else if (theRest.contains("what do you do"))
+                            result = "NOTHING TO DO";
+                        else if (theRest.contains("What is the weather like today?"))
+                            result = "";
+                        else if (theRest.contains("How can I book a flight?"))
+                            result = "";
+                        else if (theRest.contains("What is the best restaurant in town?"))
+                            result = "";
+                        else if (theRest.contains("What is the fastest way to get to the airport?"))
+                            result = "";
+                        else if (theRest.contains("What is the best way to learn a new language?"))
+                            result = "";
+                        else {
+                            int rand = (int) (Math.random() * 4 + 1);
+                            if (rand == 1)
                                 result = "I have to go. TATA BYE... BYE...";
+                            else if (rand == 2)
+                                result = "I don't understand you";
+                            else if (rand == 3)
+                                result = "I don't understand you, Bro";
+                            else if (rand == 4)
+                                result = "Please come again";
                         }
                         ps.println(result);
+                    }
 
-                    } else if (firstWord.equals("calculatorBtn")) {
+                    //if user press Calculator button
+                    else if (firstWord.equals("calculatorBtn")) {
                         ps.println(calculate(theRest));
                     }
                 }
 
-            } catch (IOException e) {
+            } catch (
+                    IOException e) {
                 e.printStackTrace();
             }
 
