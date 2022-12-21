@@ -142,6 +142,8 @@ public class design extends JFrame implements ActionListener {
         disconnectBtn.addActionListener(this);
         chatBtn.addActionListener(this);
         calculatorBtn.addActionListener(this);
+        chatInputField.addActionListener(this);
+        calculatorInputField.addActionListener(this);
         /*====================This section is for ActionListener====================*/
     }
 
@@ -156,10 +158,8 @@ public class design extends JFrame implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         // if user press Connection button
         if (e.getSource().equals(connectBtn)) {
-            System.out.println("JAHID");
             try {
-                clientSocket = new Socket("localhost", 5000);
-                in = new Scanner(System.in);
+                clientSocket = new Socket("localhost", 4789);
                 ps = new PrintStream(clientSocket.getOutputStream());
                 br = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             } catch (IOException ex) {
@@ -178,24 +178,24 @@ public class design extends JFrame implements ActionListener {
                 throw new RuntimeException(ex);
             }
         }
-        //if user press CalculatorInputField
-        if (e.getSource().equals(calculatorBtn)) {
+        // if user press chat button
+        if (e.getSource().equals(chatBtn) || e.getSource().equals(chatInputField)) {
             try {
-                line = calculatorInputField.getText();
-                ps.println(line);                // Send to server
-                result = br.readLine();         // Receive from server
-                calculatorDisplayField.setText(result);
+                line = "chatBtn " + chatInputField.getText();
+                ps.println(line);           // Send to server
+                result = br.readLine();     // Receive from server
+                dspArea.setText(dspArea.getText() + result + "\n");
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
         }
-        // if user press CHAT button
-        if (e.getSource().equals(chatBtn)) {
+        //if user press CalculatorInputField
+        if (e.getSource().equals(calculatorBtn) || e.getSource().equals(calculatorInputField)) {
             try {
-                line = chatInputField.getText();
+                line = "calculatorBtn " + calculatorInputField.getText();
                 ps.println(line);           // Send to server
                 result = br.readLine();     // Receive from server
-                dspArea.setText(dspArea.getText() + result + "\n");
+                calculatorDisplayField.setText(result);
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }

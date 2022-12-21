@@ -11,7 +11,12 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Stack;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class design extends JFrame implements ActionListener {
     Container c;
@@ -58,12 +63,12 @@ public class design extends JFrame implements ActionListener {
         /*====================This section is for MemberPanel====================*/
         memberPanel = new JPanel(new GridLayout(1, 1));
         memberPanel.setBounds(457, 120, 270, 150);
-        memberPanel.setBorder(BorderFactory.createTitledBorder(null, "Owner_Information", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, new java.awt.Font("Adobe Arabic", 1, 18)));
+        memberPanel.setBorder(BorderFactory.createTitledBorder(null, "Owner_Information", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, new Font("Adobe Arabic", 1, 18)));
         c.add(memberPanel);
 
         memberArea = new JTextArea();
         memberArea.setFont(new Font("Roboto", Font.PLAIN, 14));
-        memberArea.setBorder(BorderFactory.createTitledBorder(null, "Md. Jahid Hassan", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, new java.awt.Font("Adobe Arabic", 1, 18)));
+        memberArea.setBorder(BorderFactory.createTitledBorder(null, "Md. Jahid Hassan", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, new Font("Adobe Arabic", 1, 18)));
         memberArea.setText(" ID: 201002463\n Section: 201DB\n Batch: 201\n Dept.: CSE\n Green University of Bangladesh");
         memberArea.setEditable(true);
         memberPanel.add(memberArea);
@@ -72,7 +77,7 @@ public class design extends JFrame implements ActionListener {
         /*====================This section is for dspPanel====================*/
         dspPanel = new JPanel(new GridLayout(1, 1));
         dspPanel.setBounds(30, 120, 389, 270);
-        dspPanel.setBorder(BorderFactory.createTitledBorder(null, "Display", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, new java.awt.Font("Adobe Arabic", 1, 18)));
+        dspPanel.setBorder(BorderFactory.createTitledBorder(null, "Display", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, new Font("Adobe Arabic", 1, 18)));
         c.add(dspPanel);
 
         dspArea = new JTextArea();
@@ -110,6 +115,15 @@ public class design extends JFrame implements ActionListener {
                 throw new RuntimeException(ex);
             }
         }
+        // if user press OFF button
+        if (e.getSource().equals(offBtn)) {
+            try {
+                serverSocket.close();
+                clientSocket.close();
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
     }
 
     ServerSocket serverSocket;
@@ -118,23 +132,60 @@ public class design extends JFrame implements ActionListener {
     int count = 0;
     String result;
 
-    public void serverConnection() throws IOException {
-        try {
-            serverSocket = new ServerSocket(port);
-        } catch (IOException e) {
-            System.out.println("Could not listen on port: 5000");
-            System.exit(-1);
-        }
-        dspArea.setText(dspArea.getText() + "Server is opened at port no.: " + serverSocket.getLocalPort() + "\n");
 
-        while (count < 10) {
-            clientSocket = serverSocket.accept();     // Waiting connection request from client side
-            dspArea.setText(dspArea.getText() + "Server is connected to port no.: " + clientSocket.getPort() + "\n");
-            MathHandler mathHandler = new MathHandler(clientSocket);
-            mathHandler.start();
-            count++;
+    private static ArrayList<MathHandler> clients;
+    private static ExecutorService pool;
+    private Socket socket;
+
+
+    //    public void serverConnection() throws IOException {
+//        try {
+//            serverSocket = new ServerSocket(port);
+//        } catch (IOException e) {
+//            System.out.println("Could not listen on port: 5000");
+//            System.exit(-1);
+//        }
+//        dspArea.setText(dspArea.getText() + "Server is opened at port no.: " + serverSocket.getLocalPort() + "\n");
+//
+//        while (count < 2) {
+//            clientSocket = serverSocket.accept();     // Waiting connection request from client side
+//            dspArea.setText(dspArea.getText() + "Server is connected to port no.: " + clientSocket.getPort() + "\n");
+//            MathHandler mathHandler = new MathHandler(clientSocket);
+//            mathHandler.start();
+//            count++;
+//        }
+//    }
+    public void serverConnection() throws IOException {
+
+        try {
+            // TODO add your handling code here:
+            serverSocket = new ServerSocket(4789);
+            clients = new ArrayList<MathHandler>();
+            pool = Executors.newFixedThreadPool(2);
+            Thread myThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    while (true) {
+                        try {
+                            dspArea.append("Server is opened at port no.: " + serverSocket.getLocalPort() + "\n");
+                            dspArea.append("Waiting for Client..." + "\n");
+                            socket = serverSocket.accept();
+                            dspArea.append("Client found." + "\n");
+                            MathHandler clientThread = new MathHandler(socket);
+                            clients.add(clientThread);
+                            pool.execute(clientThread);
+                        } catch (IOException ex) {
+                            Logger.getLogger(design.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+
+                    }
+                }
+            });
+            myThread.start();
+        } catch (IOException ex) {
+            Logger.getLogger(design.class.getName()).log(Level.SEVERE, null, ex);
         }
-        serverSocket.close();
+
     }
 
     class MathHandler extends Thread {
@@ -148,58 +199,56 @@ public class design extends JFrame implements ActionListener {
             try {
                 BufferedReader br = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                 PrintStream ps = new PrintStream(clientSocket.getOutputStream());
+
                 while (true) {
                     String line = br.readLine();
-
-                    switch (line) {
-                        case "ENDS":
-                            ps.println("Connection Terminated");
-                            break;
-                        case "CALCULATE":
-                            result = Integer.toString(calculate(line));
-                            break;
-                        case "hi":
-                            result = "hello";
-                            break;
-                        case "HI":
-                            result = "hello";
-                            break;
-                        case "Hi":
-                            result = "hello";
-                            break;
-                        case "Hello":
-                            result = "Hi!";
-                            break;
-                        case "hello":
-                            result = "Hi!";
-                            break;
-                        case "What is your name?":
-                            result = "Jahid Hassan Santo";
-                            break;
-                        case "How are you?":
-                            result = "I am Fine.";
-                            break;
-                        case "What do you do?":
-                            result = "NOTHING TO DO";
-                        default:
-                            result = "I have to go. TATA BYE... BYE...";
+                    if (line.equals("ENDS")) {
+                        ps.println("Connection Terminated");
+                        break;
                     }
 
-//                    if (line.equals("ENDS")) {
-//                        ps.println("Connection Terminated");
-//                        break;
-//                    } else if (line.equals("CHAT")) {
-//                        result = chat(line);
-//                    } else if (line.equals("CALCULATE")) {
-//                        result = Integer.toString(calculate(line));
-//                    }
+                    String[] input = line.split(" ", 2);
+                    String firstWord = input[0];
+                    String theRest = input[1];
 
-                    ps.println(result);
+                    if (firstWord.equals("chatBtn")) {
+                        switch (theRest) {
+                            case "hi":
+                                result = "Hi there!";
+                                break;
+                            case "Hi":
+                                result = "Hi there!";
+                                break;
+                            case "Hello":
+                                result = "Hello!";
+                                break;
+                            case "hello":
+                                result = "Hello!";
+                                break;
+                            case "How are you?":
+                                result = "I'm doing well, thanks for asking!";
+                                break;
+                            case "What is your name?":
+                                result = "Jahid Hassan Santo";
+                                break;
+                            case "What do you do?":
+                                result = "NOTHING TO DO";
+                            default:
+                                result = "I have to go. TATA BYE... BYE...";
+                        }
+                        ps.println(result);
+
+                    } else if (firstWord.equals("calculatorBtn")) {
+                        ps.println(calculate(theRest));
+                    }
                 }
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
         }
+
     }
 
 
@@ -208,35 +257,26 @@ public class design extends JFrame implements ActionListener {
         char[] tokens = expression.toCharArray();
 
         // Stack for numbers: 'values'
-        Stack<Integer> values = new
-                Stack<Integer>();
+        Stack<Integer> values = new Stack<Integer>();
 
         // Stack for Operators: 'ops'
-        Stack<Character> ops = new
-                Stack<Character>();
+        Stack<Character> ops = new Stack<Character>();
 
         for (int i = 0; i < tokens.length; i++) {
 
             // Current token is a
             // whitespace, skip it
-            if (tokens[i] == ' ')
-                continue;
+            if (tokens[i] == ' ') continue;
 
             // Current token is a number,
             // push it to stack for numbers
-            if (tokens[i] >= '0' &&
-                    tokens[i] <= '9') {
-                StringBuffer sbuf = new
-                        StringBuffer();
+            if (tokens[i] >= '0' && tokens[i] <= '9') {
+                StringBuffer sbuf = new StringBuffer();
 
                 // There may be more than one
                 // digits in number
-                while (i < tokens.length &&
-                        tokens[i] >= '0' &&
-                        tokens[i] <= '9')
-                    sbuf.append(tokens[i++]);
-                values.push(Integer.parseInt(sbuf.
-                        toString()));
+                while (i < tokens.length && tokens[i] >= '0' && tokens[i] <= '9') sbuf.append(tokens[i++]);
+                values.push(Integer.parseInt(sbuf.toString()));
 
                 // right now the i points to
                 // the character next to the digit,
@@ -250,35 +290,24 @@ public class design extends JFrame implements ActionListener {
 
             // Current token is an opening brace,
             // push it to 'ops'
-            else if (tokens[i] == '(')
-                ops.push(tokens[i]);
+            else if (tokens[i] == '(') ops.push(tokens[i]);
 
                 // Closing brace encountered,
                 // solve entire brace
             else if (tokens[i] == ')') {
-                while (ops.peek() != '(')
-                    values.push(applyOp(ops.pop(),
-                            values.pop(),
-                            values.pop()));
+                while (ops.peek() != '(') values.push(applyOp(ops.pop(), values.pop(), values.pop()));
                 ops.pop();
             }
 
             // Current token is an operator.
-            else if (tokens[i] == '+' ||
-                    tokens[i] == '-' ||
-                    tokens[i] == '*' ||
-                    tokens[i] == '/') {
+            else if (tokens[i] == '+' || tokens[i] == '-' || tokens[i] == '*' || tokens[i] == '/') {
                 // While top of 'ops' has same
                 // or greater precedence to current
                 // token, which is an operator.
                 // Apply operator on top of 'ops'
                 // to top two elements in values stack
-                while (!ops.empty() &&
-                        hasPrecedence(tokens[i],
-                                ops.peek()))
-                    values.push(applyOp(ops.pop(),
-                            values.pop(),
-                            values.pop()));
+                while (!ops.empty() && hasPrecedence(tokens[i], ops.peek()))
+                    values.push(applyOp(ops.pop(), values.pop(), values.pop()));
 
                 // Push current token to 'ops'.
                 ops.push(tokens[i]);
@@ -288,10 +317,7 @@ public class design extends JFrame implements ActionListener {
         // Entire expression has been
         // parsed at this point, apply remaining
         // ops to remaining values
-        while (!ops.empty())
-            values.push(applyOp(ops.pop(),
-                    values.pop(),
-                    values.pop()));
+        while (!ops.empty()) values.push(applyOp(ops.pop(), values.pop(), values.pop()));
 
         // Top of 'values' contains
         // result, return it
@@ -299,21 +325,17 @@ public class design extends JFrame implements ActionListener {
     }
 
     // Returns true if 'op2' has higher
-    // or same precedence as 'op1',
-    // otherwise returns false.
+// or same precedence as 'op1',
+// otherwise returns false.
     public static boolean hasPrecedence(char op1, char op2) {
-        if (op2 == '(' || op2 == ')')
-            return false;
-        if ((op1 == '*' || op1 == '/') &&
-                (op2 == '+' || op2 == '-'))
-            return false;
-        else
-            return true;
+        if (op2 == '(' || op2 == ')') return false;
+        if ((op1 == '*' || op1 == '/') && (op2 == '+' || op2 == '-')) return false;
+        else return true;
     }
 
     // A utility method to apply an
-    // operator 'op' on operands 'a'
-    // and 'b'. Return the result.
+// operator 'op' on operands 'a'
+// and 'b'. Return the result.
     public static int applyOp(char op, int b, int a) {
         switch (op) {
             case '+':
@@ -323,8 +345,7 @@ public class design extends JFrame implements ActionListener {
             case '*':
                 return a * b;
             case '/':
-                if (b == 0)
-                    throw new UnsupportedOperationException("Cannot divide by zero");
+                if (b == 0) throw new UnsupportedOperationException("Cannot divide by zero");
                 return a / b;
         }
         return 0;
