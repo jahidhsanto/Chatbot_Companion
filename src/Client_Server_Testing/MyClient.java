@@ -1,4 +1,4 @@
-package CLIENT;
+package Client_Server_Testing;
 
 import CLIENT.design;
 import java.net.*;

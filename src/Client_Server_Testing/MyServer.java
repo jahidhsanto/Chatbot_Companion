@@ -1,4 +1,4 @@
-package SERVER;
+package Client_Server_Testing;
 
 import java.net.*;
 import java.io.*;
