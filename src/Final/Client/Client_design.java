@@ -1,4 +1,4 @@
-package CLIENT;
+package Final.Client;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -9,10 +9,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.util.Scanner;
 
-public class design extends JFrame implements ActionListener {
+public class Client_design extends JFrame implements ActionListener {
     Container c;
     private Font titleFont, font, calculatorFont;
     private JLabel titleLabel, dspLabel;
@@ -20,8 +21,13 @@ public class design extends JFrame implements ActionListener {
     private JTextField calculatorDisplayField, calculatorInputField, chatInputField;
     private JButton connectBtn, disconnectBtn, chatBtn, calculatorBtn;
     private JPanel dspPanel, buttonPanel, memberPanel, calculatorPanel, optionPanel;
+    private String username, ip, port;
 
-    design() {
+    Client_design(String username, String ip, String port) {
+        this.username = username;
+        this.ip = ip;
+        this.port = port;
+
         initComponents();   // Calling initComponents method
     }
 
@@ -158,7 +164,7 @@ public class design extends JFrame implements ActionListener {
         // if user press Connection button
         if (e.getSource().equals(connectBtn)) {
             try {
-                clientSocket = new Socket("localhost", 4789);
+                clientSocket = new Socket(InetAddress.getByName(ip), Integer.parseInt(port));
                 ps = new PrintStream(clientSocket.getOutputStream());
                 br = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             } catch (IOException ex) {
@@ -201,8 +207,8 @@ public class design extends JFrame implements ActionListener {
         }
     }
 
-    public static void main(String[] args) {
-        design frame = new design();
+    public static void main(String[] args, String username, String ip, String port) {
+        Client_design frame = new Client_design(username, ip, port);
         frame.setVisible(true);
     }
 }

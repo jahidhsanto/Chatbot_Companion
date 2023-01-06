@@ -1,6 +1,6 @@
-package SERVER;
+package Final.Server;
 
-public class AI extends design {
+public class Module02_AI extends Server02_design {
     public static String rtrn(String theRest) {
         if (theRest.contains("hi"))
             return "Hi there!";
@@ -13,7 +13,7 @@ public class AI extends design {
         else if (theRest.contains("what do you do"))
             return "NOTHING TO DO";
         else if (theRest.contains("what is time now") || theRest.contains("what is time") || theRest.contains("time") || theRest.contains("date") || theRest.contains("what is date") || theRest.contains("what is date today")) {
-            return "Current Date and Time: " + Check_Date_Time.date_time();
+            return "Current Date and Time: " + Module03_Check_Date_Time.date_time();
         } else if (theRest.contains("What is your favorite color?") || theRest.contains("clr") || theRest.contains("color") || theRest.contains("colour"))
             return "My favorite color is blue";
         else if (theRest.contains("What is the weather like today?"))

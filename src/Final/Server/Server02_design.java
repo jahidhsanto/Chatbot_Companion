@@ -1,4 +1,4 @@
-package SERVER;
+package Final.Server;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -9,6 +9,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -17,16 +18,17 @@ import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class design extends JFrame implements ActionListener {
+public class Server02_design extends JFrame implements ActionListener {
     Container c;
     private Font titleFont, font;
 
     private JLabel titleLabel, dspLabel;
     private JTextArea dspArea, memberArea;
+    private JScrollPane scroll;
     private JButton onBtn, offBtn;
     private JPanel dspPanel, buttonPanel, memberPanel;
 
-    design() {
+    Server02_design() {
         initComponents();   // Calling initComponents method
 
     }
@@ -82,6 +84,10 @@ public class design extends JFrame implements ActionListener {
         dspArea = new JTextArea();
         dspArea.setFont(font);
         dspPanel.add(dspArea);
+
+        scroll = new JScrollPane(dspArea);
+        scroll.setBounds(0, 0, 389, 270);
+        dspPanel.add(scroll);
         /*====================This section is for dspPanel====================*/
 
         /*====================This section is for buttonPanel====================*/
@@ -127,8 +133,7 @@ public class design extends JFrame implements ActionListener {
     }
     /*====================This section is for ActionListener Implementation====================*/
 
-    /*====================This section is for Socket Programming====================*/
-    ServerSocket serverSocket;
+    /*====================This section is for Socket Programming====================*/ ServerSocket serverSocket;
     Socket clientSocket;
     int port = 5000;
     int count = 0;
@@ -152,6 +157,8 @@ public class design extends JFrame implements ActionListener {
                 public void run() {
                     while (true) {
                         try {
+                            InetAddress localhost = InetAddress.getLocalHost();
+                            dspArea.append("Server is opened at IP.: " + localhost.getHostAddress() + "\n");
                             dspArea.append("Server is opened at port no.: " + serverSocket.getLocalPort() + "\n");
                             dspArea.append("Waiting for Client..." + "\n");
                             socket = serverSocket.accept();
@@ -160,7 +167,7 @@ public class design extends JFrame implements ActionListener {
                             clients.add(clientThread);
                             pool.execute(clientThread);
                         } catch (IOException ex) {
-                            Logger.getLogger(design.class.getName()).log(Level.SEVERE, null, ex);
+                            Logger.getLogger(Server02_design.class.getName()).log(Level.SEVERE, null, ex);
                         }
 
                     }
@@ -168,7 +175,7 @@ public class design extends JFrame implements ActionListener {
             });
             myThread.start();
         } catch (IOException ex) {
-            Logger.getLogger(design.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Server02_design.class.getName()).log(Level.SEVERE, null, ex);
         }
 
     }
@@ -199,16 +206,15 @@ public class design extends JFrame implements ActionListener {
 
                     // if user press chat button
                     if (firstWord.equals("chatBtn")) {
-                        ps.println(SERVER.AI.rtrn(theRest));
+                        ps.println(Module02_AI.rtrn(theRest));
                     }
 
                     //if user press Calculator button
                     else if (firstWord.equals("calculatorBtn")) {
-                        ps.println(SERVER.calculator.calculate(theRest));
+                        ps.println(Module01_calculator.calculate(theRest));
                     }
                 }
-            } catch (
-                    IOException e) {
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }
@@ -216,7 +222,7 @@ public class design extends JFrame implements ActionListener {
     /*====================This section is for Socket Programming====================*/
 
     public static void main(String[] args) {
-        design frame = new design();
+        Server02_design frame = new Server02_design();
         frame.setVisible(true);
     }
 }
