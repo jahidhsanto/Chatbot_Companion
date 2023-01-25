@@ -8,7 +8,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.net.InetAddress;
 import java.net.Socket;
 import java.util.Scanner;
 
@@ -55,7 +54,7 @@ public class Client03_Calculator extends JFrame implements ActionListener {
         add(btnBack);
 
         try {
-            clientSocket = new Socket(InetAddress.getByName(ip), Integer.parseInt(port));
+            clientSocket = new Socket("localhost", 4789);
             ps = new PrintStream(clientSocket.getOutputStream());
             br = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         } catch (IOException ex) {
